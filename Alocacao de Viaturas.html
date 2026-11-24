@@ -1,0 +1,560 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Alocação de Viaturas</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+
+:root{
+  --bg:#e8ece8; --surface:#f6f8f5; --ink:#18201b; --muted:#56615a; --line:#c9d2ca;
+  --accent:#3f5a34; --accent-ink:#f6f8f5; --field:#ffffff;
+  --ok:#2f6b3a; --use:#8a5a00; --late:#a8321f; --mnt:#4a5b73; --sched:#35607f;
+  --display:"Barlow Condensed","Arial Narrow",sans-serif;
+  --body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#111613; --surface:#1a211c; --ink:#e4eae5; --muted:#9aa79e; --line:#2f3931;
+    --accent:#8fb77a; --accent-ink:#101611; --field:#141b16;
+    --ok:#7fc58d; --use:#e0a93b; --late:#ef8a76; --mnt:#93a8c6; --sched:#86b2d4;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#111613; --surface:#1a211c; --ink:#e4eae5; --muted:#9aa79e; --line:#2f3931;
+  --accent:#8fb77a; --accent-ink:#101611; --field:#141b16;
+  --ok:#7fc58d; --use:#e0a93b; --late:#ef8a76; --mnt:#93a8c6; --sched:#86b2d4;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.45;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 40px}
+.wrap{max-width:1180px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
+h1,h2,h3,p{margin:0}
+button,input,select{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+.top{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap;border-bottom:2px solid var(--ink);padding-bottom:12px}
+.eyebrow{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+h1{font-family:var(--display);font-weight:700;font-size:clamp(2rem,6vw,3.1rem);line-height:1;letter-spacing:.02em;text-transform:uppercase;text-wrap:balance}
+.clock{font-family:var(--mono);font-size:13px;color:var(--muted);text-align:right}
+
+.summary{display:flex;flex-wrap:wrap;gap:0;border:1px solid var(--line);background:var(--surface)}
+.stat{flex:1 1 130px;min-width:0;padding:10px 14px;border-right:1px solid var(--line)}
+.stat:last-child{border-right:0}
+.stat b{display:block;font-family:var(--display);font-size:2rem;font-weight:600;line-height:1.05;font-variant-numeric:tabular-nums}
+.stat span{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.stat.alert b{color:var(--late)}
+
+.tabs{display:flex;gap:4px;flex-wrap:wrap}
+.tab{background:transparent;border:1px solid var(--line);padding:8px 16px;cursor:pointer;font-weight:500}
+.tab[aria-selected="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.flash{min-height:1.4em;font-size:14px}
+.flash.ok{color:var(--ok)} .flash.err{color:var(--late)}
+
+.layout{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:20px;align-items:start}
+@media (max-width:900px){.layout{grid-template-columns:minmax(0,1fr)}}
+
+.bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
+.pill{background:transparent;border:1px solid var(--line);padding:5px 12px;cursor:pointer;font-size:13px}
+.pill[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.search{flex:1 1 160px;min-width:0;background:var(--field);border:1px solid var(--line);padding:6px 10px}
+
+.list{display:flex;flex-direction:column;border:1px solid var(--line);background:var(--surface)}
+.row{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1.5fr) auto;gap:6px 16px;padding:12px 14px;border-bottom:1px solid var(--line);align-items:center}
+.row:last-child{border-bottom:0}
+.row > *{min-width:0}
+@media (max-width:640px){.row{grid-template-columns:minmax(0,1fr)}}
+.plate{font-family:var(--mono);font-weight:500;font-size:14px;letter-spacing:.04em}
+.model{font-weight:600}
+.sub{font-size:13px;color:var(--muted)}
+.mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.acts{display:flex;gap:6px;flex-wrap:wrap}
+.btn{background:transparent;border:1px solid var(--ink);padding:6px 12px;cursor:pointer;font-size:13px;font-weight:500}
+.btn:hover{background:var(--ink);color:var(--bg)}
+.btn.main{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.main:hover{filter:brightness(1.08);background:var(--accent);color:var(--accent-ink)}
+.btn.quiet{border-color:var(--line);color:var(--muted)}
+.btn.quiet:hover{border-color:var(--late);background:transparent;color:var(--late)}
+
+.chip{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;white-space:nowrap}
+.chip::before{content:"";width:9px;height:9px;border-radius:50%;background:currentColor}
+.chip.livre{color:var(--ok)} .chip.uso{color:var(--use)} .chip.pendente,.chip.atrasada{color:var(--late)}
+.chip.manut{color:var(--mnt)} .chip.agendada{color:var(--sched)} .chip.em-uso{color:var(--use)}
+.chip.concluida{color:var(--muted)} .chip.cancelada{color:var(--muted)}
+.chip.cancelada::before{border-radius:0}
+
+.ret{grid-column:1/-1;display:flex;gap:8px;flex-wrap:wrap;align-items:center;padding-top:6px}
+.ret input{width:9rem;background:var(--field);border:1px solid var(--line);padding:6px 8px}
+.empty{padding:28px 16px;color:var(--muted);text-align:center}
+
+.panel{background:var(--surface);border:1px solid var(--line);padding:16px;display:flex;flex-direction:column;gap:12px;position:sticky;top:12px}
+@media (max-width:900px){.panel{position:static}}
+.panel h2{font-family:var(--display);font-size:1.5rem;text-transform:uppercase;letter-spacing:.04em;font-weight:600}
+.field{display:flex;flex-direction:column;gap:4px;min-width:0}
+.field label{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.field input,.field select{width:100%;background:var(--field);border:1px solid var(--line);padding:8px 10px;min-width:0}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media (max-width:420px){.two{grid-template-columns:1fr}}
+.formerr{color:var(--late);font-size:13px;display:flex;flex-direction:column;gap:2px}
+.formerr:empty{display:none}
+
+.dayctl{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
+.dayctl input{background:var(--field);border:1px solid var(--line);padding:6px 8px}
+.dayttl{font-family:var(--display);font-size:1.3rem;text-transform:capitalize;font-weight:600}
+.agenda{border:1px solid var(--line);background:var(--surface);overflow-x:auto}
+.agenda-in{min-width:560px}
+.arow{display:grid;grid-template-columns:5.8rem minmax(0,1fr);border-bottom:1px solid var(--line);align-items:stretch}
+.arow:last-child{border-bottom:0}
+.alabel{padding:8px 10px;border-right:1px solid var(--line);display:flex;flex-direction:column;justify-content:center}
+.alabel .sub{font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.track{position:relative;height:46px;background:repeating-linear-gradient(to right,transparent 0 calc(12.5% - 1px),var(--line) calc(12.5% - 1px) 12.5%)}
+.arow.axis .track{height:26px;background:none}
+.tick{position:absolute;top:5px;font-family:var(--mono);font-size:11px;color:var(--muted);transform:translateX(3px)}
+.seg{position:absolute;top:6px;bottom:6px;border:1px solid currentColor;padding:0 6px;font-size:12px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;display:flex;align-items:center;
+  background:color-mix(in srgb,currentColor 18%,var(--surface));color:var(--use)}
+.seg span{color:var(--ink);overflow:hidden;text-overflow:ellipsis}
+.seg.agendada{color:var(--sched)} .seg.atrasada{color:var(--late)} .seg.concluida{color:var(--muted);opacity:.8}
+.seg.mnt{color:var(--mnt);left:0;right:0;background:repeating-linear-gradient(135deg,color-mix(in srgb,var(--mnt) 22%,var(--surface)) 0 8px,var(--surface) 8px 16px)}
+.nowline{position:absolute;top:0;bottom:0;width:2px;background:var(--late);z-index:2}
+.legend{display:flex;gap:14px;flex-wrap:wrap;margin-top:10px;font-size:12px}
+
+.foot{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;font-size:12px;color:var(--muted);border-top:1px solid var(--line);padding-top:12px}
+.foot button{background:none;border:0;padding:0;color:var(--muted);text-decoration:underline;cursor:pointer;font-size:12px}
+@media (prefers-reduced-motion:no-preference){.tab,.btn,.pill{transition:background .12s,color .12s}}
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div>
+      <p class="eyebrow">Seção de Transporte · Controle de pátio</p>
+      <h1>Alocação de Viaturas</h1>
+    </div>
+    <div class="clock" id="clock"></div>
+  </header>
+
+  <section class="summary" id="summary" aria-label="Resumo da frota"></section>
+
+  <nav class="tabs" role="tablist" aria-label="Visões">
+    <button class="tab" role="tab" data-view="frota" id="tab-frota">Frota</button>
+    <button class="tab" role="tab" data-view="alocacoes" id="tab-alocacoes">Alocações</button>
+    <button class="tab" role="tab" data-view="agenda" id="tab-agenda">Agenda do dia</button>
+  </nav>
+  <p class="flash" id="flash" role="status" aria-live="polite"></p>
+
+  <div class="layout">
+    <section id="view" aria-live="off"></section>
+
+    <aside class="panel" id="panel">
+      <h2>Nova alocação</h2>
+      <form id="form" novalidate>
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <div class="field"><label for="f-veh">Viatura</label><select id="f-veh"></select></div>
+          <div class="field"><label for="f-om">Organização Militar</label><input id="f-om" list="dl-om" autocomplete="off" placeholder="Ex.: Cia de Comunicações"></div>
+          <div class="field"><label for="f-miss">Missão</label><select id="f-miss"></select></div>
+          <div class="field"><label for="f-dest">Destino</label><input id="f-dest" autocomplete="off" placeholder="Ex.: Campo de instrução"></div>
+          <div class="two">
+            <div class="field"><label for="f-mot">Motorista</label><input id="f-mot" list="dl-mot" autocomplete="off" placeholder="Posto e nome"></div>
+            <div class="field"><label for="f-pax">Efetivo</label><input id="f-pax" type="number" min="1" step="1" value="1" inputmode="numeric"></div>
+          </div>
+          <div class="field"><label for="f-ini">Saída</label><input id="f-ini" type="datetime-local"></div>
+          <div class="field"><label for="f-fim">Retorno previsto</label><input id="f-fim" type="datetime-local"></div>
+          <div class="formerr" id="formerr" role="alert"></div>
+          <button class="btn main" type="submit" style="padding:10px 14px;font-size:14px">Alocar viatura</button>
+        </div>
+      </form>
+      <datalist id="dl-om"></datalist>
+      <datalist id="dl-mot"></datalist>
+    </aside>
+  </div>
+
+  <footer class="foot">
+    <span>Os dados ficam salvos neste navegador. Viaturas, OMs e nomes do exemplo são fictícios.</span>
+    <button type="button" id="reset">Restaurar dados de exemplo</button>
+  </footer>
+</div>
+
+<script>
+(function(){
+'use strict';
+
+var KEY = 'viaturas-alocacao-v1';
+var H = 3600000, MIN = 60000;
+var MISSOES = ['Instrução','Apoio logístico','Patrulhamento','Evacuação aeromédica de apoio','Deslocamento administrativo','Manutenção externa','Outra'];
+var VIEWS = ['frota','alocacoes','agenda'];
+
+function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
+function pad(n){ return (n < 10 ? '0' : '') + n; }
+function esc(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+function startOfDay(ts){ var d = new Date(ts); d.setHours(0,0,0,0); return d.getTime(); }
+function toInput(ts){ var d = new Date(ts); return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())+'T'+pad(d.getHours())+':'+pad(d.getMinutes()); }
+function toDateInput(ts){ return toInput(ts).slice(0,10); }
+function hm(ts){ var d = new Date(ts); return pad(d.getHours())+':'+pad(d.getMinutes()); }
+function dayDiff(ts){ return Math.round((startOfDay(ts) - startOfDay(Date.now())) / 86400000); }
+function fmt(ts){
+  var diff = dayDiff(ts), d = new Date(ts);
+  if (diff === 0) return 'hoje ' + hm(ts);
+  if (diff === 1) return 'amanhã ' + hm(ts);
+  if (diff === -1) return 'ontem ' + hm(ts);
+  return pad(d.getDate())+'/'+pad(d.getMonth()+1)+' '+hm(ts);
+}
+function period(a){
+  if (startOfDay(a.start) === startOfDay(a.end)) return fmt(a.start) + ' – ' + hm(a.end);
+  return fmt(a.start) + ' – ' + fmt(a.end);
+}
+
+
+function at(dayOffset, hour, min){
+  var d = new Date(); d.setHours(hour, min || 0, 0, 0); d.setDate(d.getDate() + dayOffset); return d.getTime();
+}
+function seed(){
+  var v = [
+    {id:'v1', plate:'EB-1042', model:'VTNE Marruá 4x4', kind:'Utilitária', seats:6,  km:48210, maint:false},
+    {id:'v2', plate:'EB-1043', model:'VTNE Marruá 4x4', kind:'Utilitária', seats:6,  km:51930, maint:false},
+    {id:'v3', plate:'EB-2210', model:'VBTP-MR Guarani 6x6', kind:'Blindada', seats:11, km:12480, maint:false},
+    {id:'v4', plate:'EB-2211', model:'VBTP-MR Guarani 6x6', kind:'Blindada', seats:11, km:9760,  maint:false},
+    {id:'v5', plate:'EB-3105', model:'Caminhão tático 5 t', kind:'Carga e tropa', seats:18, km:87400, maint:false},
+    {id:'v6', plate:'EB-3106', model:'Caminhão tático 5 t', kind:'Carga e tropa', seats:18, km:90215, maint:true},
+    {id:'v7', plate:'EB-4008', model:'Ambulância 4x4', kind:'Saúde', seats:4, km:33120, maint:false},
+    {id:'v8', plate:'EB-5001', model:'Micro-ônibus', kind:'Pessoal', seats:28, km:64870, maint:false}
+  ];
+  var a = [
+    {vehicleId:'v1', om:'1º Batalhão de Infantaria', mission:'Instrução', dest:'Campo de instrução', driver:'Cb Almeida', pax:5, start:at(0,6), end:at(0,11,30)},
+    {vehicleId:'v3', om:'1º Batalhão de Infantaria', mission:'Instrução', dest:'Área de tiro', driver:'3º Sgt Moura', pax:9, start:at(0,9), end:at(0,15)},
+    {vehicleId:'v7', om:'Pelotão de Saúde', mission:'Apoio logístico', dest:'Hospital de Guarnição', driver:'Sd Ribeiro', pax:3, start:at(0,8), end:at(0,20)},
+    {vehicleId:'v4', om:'Cia de Comunicações', mission:'Patrulhamento', dest:'Setor Norte', driver:'Cb Teixeira', pax:8, start:at(0,13), end:at(0,17)},
+    {vehicleId:'v5', om:'Companhia de Apoio', mission:'Apoio logístico', dest:'Depósito regional', driver:'Sd Farias', pax:2, start:at(1,7), end:at(1,18)},
+    {vehicleId:'v2', om:'Pelotão de Polícia do Exército', mission:'Deslocamento administrativo', dest:'Comando da Região', driver:'Cb Almeida', pax:4, start:at(1,9), end:at(1,12)},
+    {vehicleId:'v8', om:'1º Batalhão de Infantaria', mission:'Deslocamento administrativo', dest:'Aeródromo', driver:'3º Sgt Moura', pax:24, start:at(2,6), end:at(2,19)}
+  ].map(function(x){ x.id = uid(); x.status = 'aberta'; return x; });
+  a.push({id:uid(), vehicleId:'v2', om:'Companhia de Apoio', mission:'Manutenção externa', dest:'Oficina de Material', driver:'Sd Farias', pax:2, start:at(-1,8), end:at(-1,12), status:'concluida', kmFinal:51930});
+  return {vehicles:v, allocs:a};
+}
+
+var state = load();
+function load(){
+  try {
+    var raw = localStorage.getItem(KEY);
+    if (raw) { var s = JSON.parse(raw); if (s && s.vehicles && s.allocs) return s; }
+  } catch(e){}
+  return seed();
+}
+function save(){ try { localStorage.setItem(KEY, JSON.stringify(state)); } catch(e){} }
+
+var ui = {view:'frota', filter:'todas', q:'', aloFilter:'abertas', day:startOfDay(Date.now()), returning:null, resetArmed:false};
+
+
+function vehicle(id){ return state.vehicles.filter(function(v){ return v.id === id; })[0]; }
+function phase(a){
+  if (a.status !== 'aberta') return a.status;
+  var t = Date.now();
+  if (t < a.start) return 'agendada';
+  if (t < a.end) return 'em-uso';
+  return 'atrasada';
+}
+function openAllocs(){ return state.allocs.filter(function(a){ return a.status === 'aberta'; }); }
+function vehStatus(v){
+  if (v.maint) return 'manut';
+  var mine = openAllocs().filter(function(a){ return a.vehicleId === v.id; });
+  if (mine.some(function(a){ return phase(a) === 'atrasada'; })) return 'pendente';
+  if (mine.some(function(a){ return phase(a) === 'em-uso'; })) return 'uso';
+  return 'livre';
+}
+var STATUS_LABEL = {livre:'Disponível', uso:'Em uso', pendente:'Devolução pendente', manut:'Manutenção'};
+var PHASE_LABEL = {agendada:'Agendada','em-uso':'Em uso', atrasada:'Devolução pendente', concluida:'Concluída', cancelada:'Cancelada'};
+
+function nextAlloc(v){
+  var t = Date.now();
+  var list = openAllocs().filter(function(a){ return a.vehicleId === v.id && a.end > t; }).sort(function(x,y){ return x.start - y.start; });
+  return list[0];
+}
+function overlaps(a, b){ return a.start < b.end && b.start < a.end; }
+function clash(candidate, field, value){
+  var key = String(value).trim().toLowerCase();
+  return openAllocs().filter(function(a){
+    var mine = field === 'driver' ? String(a.driver).trim().toLowerCase() : a.vehicleId;
+    return mine === key && overlaps(a, candidate);
+  })[0];
+}
+
+
+var $ = function(id){ return document.getElementById(id); };
+
+function renderSummary(){
+  var vs = state.vehicles, c = {livre:0, uso:0, pendente:0, manut:0};
+  vs.forEach(function(v){ c[vehStatus(v)]++; });
+  function stat(n, label, alert){ return '<div class="stat' + (alert ? ' alert' : '') + '"><b>' + n + '</b><span>' + label + '</span></div>'; }
+  $('summary').innerHTML =
+    stat(vs.length, 'Viaturas na frota') + stat(c.livre, 'Disponíveis agora') + stat(c.uso, 'Em uso') +
+    stat(c.manut, 'Em manutenção') + stat(c.pendente, 'Devolução pendente', c.pendente > 0);
+}
+
+function renderTabs(){
+  VIEWS.forEach(function(v){
+    var el = $('tab-' + v);
+    el.setAttribute('aria-selected', ui.view === v ? 'true' : 'false');
+  });
+}
+
+function renderFrota(){
+  var q = ui.q.trim().toLowerCase();
+  var list = state.vehicles.filter(function(v){
+    var st = vehStatus(v);
+    if (ui.filter !== 'todas' && st !== ui.filter) return false;
+    if (q && (v.plate + ' ' + v.model + ' ' + v.kind).toLowerCase().indexOf(q) < 0) return false;
+    return true;
+  });
+  var filters = [['todas','Todas'],['livre','Disponíveis'],['uso','Em uso'],['pendente','Pendentes'],['manut','Manutenção']];
+  var html = '<div class="bar">' + filters.map(function(f){
+    return '<button class="pill" data-act="filter" data-v="' + f[0] + '" aria-pressed="' + (ui.filter === f[0]) + '">' + f[1] + '</button>';
+  }).join('') + '<input class="search" id="q" type="search" placeholder="Buscar registro ou modelo" value="' + esc(ui.q) + '" aria-label="Buscar viatura"></div>';
+  if (!list.length) { return html + '<div class="list"><div class="empty">Nenhuma viatura com esse filtro.</div></div>'; }
+  html += '<div class="list">' + list.map(function(v){
+    var st = vehStatus(v), nx = nextAlloc(v), info = '';
+    if (v.maint) info = 'Indisponível até ser liberada.';
+    else if (nx && st !== 'livre') info = (st === 'uso' ? 'Retorno previsto ' : 'Devia ter voltado ') + fmt(nx.end) + ' · ' + esc(nx.om);
+    else if (nx) info = 'Próxima saída ' + fmt(nx.start) + ' · ' + esc(nx.om);
+    else info = 'Sem reservas.';
+    return '<div class="row">' +
+      '<div><div class="plate">' + esc(v.plate) + '</div><div class="model">' + esc(v.model) + '</div>' +
+        '<div class="sub">' + esc(v.kind) + ' · lotação ' + v.seats + ' · <span class="mono">' + v.km.toLocaleString('pt-BR') + ' km</span></div></div>' +
+      '<div><span class="chip ' + st + '">' + STATUS_LABEL[st] + '</span><div class="sub" style="margin-top:4px">' + info + '</div></div>' +
+      '<div class="acts">' +
+        (v.maint ? '' : '<button class="btn main" data-act="pick" data-id="' + v.id + '">Alocar</button>') +
+        '<button class="btn quiet" data-act="maint" data-id="' + v.id + '">' + (v.maint ? 'Liberar' : 'Manutenção') + '</button>' +
+      '</div></div>';
+  }).join('') + '</div>';
+  return html;
+}
+
+function renderAlocacoes(){
+  var abertas = ui.aloFilter === 'abertas';
+  var list = state.allocs.filter(function(a){ return abertas ? a.status === 'aberta' : a.status !== 'aberta'; })
+    .sort(function(x,y){ return abertas ? x.start - y.start : y.start - x.start; });
+  var html = '<div class="bar">' +
+    '<button class="pill" data-act="aloFilter" data-v="abertas" aria-pressed="' + abertas + '">Em aberto</button>' +
+    '<button class="pill" data-act="aloFilter" data-v="encerradas" aria-pressed="' + !abertas + '">Encerradas</button></div>';
+  if (!list.length) return html + '<div class="list"><div class="empty">' + (abertas ? 'Nenhuma alocação em aberto. Use o painel para criar a primeira.' : 'Nada encerrado ainda.') + '</div></div>';
+  html += '<div class="list">' + list.map(function(a){
+    var v = vehicle(a.vehicleId), ph = phase(a);
+    var ret = '';
+    if (ui.returning === a.id) {
+      ret = '<div class="ret"><label class="sub" for="km-' + a.id + '">Hodômetro na devolução (km)</label>' +
+        '<input id="km-' + a.id + '" type="number" min="' + (v ? v.km : 0) + '" value="' + (v ? v.km : '') + '" inputmode="numeric">' +
+        '<button class="btn main" data-act="returnOk" data-id="' + a.id + '">Confirmar devolução</button>' +
+        '<button class="btn" data-act="returnNo">Voltar</button></div>';
+    }
+    var acts = a.status === 'aberta' && ui.returning !== a.id
+      ? '<div class="acts"><button class="btn" data-act="return" data-id="' + a.id + '">Devolver</button><button class="btn quiet" data-act="cancel" data-id="' + a.id + '">Cancelar</button></div>' : '<div></div>';
+    var extra = a.status === 'concluida' && a.kmFinal ? ' · devolvida com ' + Number(a.kmFinal).toLocaleString('pt-BR') + ' km' : '';
+    return '<div class="row">' +
+      '<div><div class="plate">' + esc(v ? v.plate : '—') + '</div><div class="model">' + esc(v ? v.model : 'Viatura removida') + '</div>' +
+        '<div class="sub">' + esc(a.om) + '</div></div>' +
+      '<div><span class="chip ' + ph + '">' + PHASE_LABEL[ph] + '</span>' +
+        '<div class="sub" style="margin-top:4px">' + esc(a.mission) + ' → ' + esc(a.dest) + '</div>' +
+        '<div class="sub">' + esc(a.driver) + ' · ' + a.pax + ' militar(es)</div>' +
+        '<div class="sub mono">' + period(a) + extra + '</div></div>' +
+      acts + ret + '</div>';
+  }).join('') + '</div>';
+  return html;
+}
+
+function renderAgenda(){
+  var d0 = ui.day, d1 = d0 + 24 * H, t = Date.now();
+  var title = new Date(d0).toLocaleDateString('pt-BR', {weekday:'long', day:'2-digit', month:'long'});
+  var html = '<div class="dayctl">' +
+    '<button class="btn" data-act="day" data-v="-1" aria-label="Dia anterior">‹</button>' +
+    '<button class="btn" data-act="day" data-v="0">Hoje</button>' +
+    '<button class="btn" data-act="day" data-v="1" aria-label="Próximo dia">›</button>' +
+    '<input type="date" id="daypick" value="' + toDateInput(d0) + '" aria-label="Escolher dia">' +
+    '<span class="dayttl">' + esc(title) + '</span></div>';
+  var nowLine = (t >= d0 && t < d1) ? '<div class="nowline" style="left:' + ((t - d0) / (24 * H) * 100).toFixed(2) + '%"></div>' : '';
+  var ticks = '';
+  for (var h = 0; h < 24; h += 3) ticks += '<span class="tick" style="left:' + (h / 24 * 100) + '%">' + pad(h) + 'h</span>';
+  html += '<div class="agenda"><div class="agenda-in"><div class="arow axis"><div class="alabel"></div><div class="track">' + ticks + '</div></div>';
+  html += state.vehicles.map(function(v){
+    var segs = '';
+    if (v.maint) segs += '<div class="seg mnt"><span>Em manutenção</span></div>';
+    state.allocs.filter(function(a){ return a.vehicleId === v.id && a.status !== 'cancelada' && a.start < d1 && a.end > d0; }).forEach(function(a){
+      var s = Math.max(a.start, d0), e = Math.min(a.end, d1);
+      var left = (s - d0) / (24 * H) * 100, w = Math.max((e - s) / (24 * H) * 100, 1);
+      var ph = phase(a);
+      segs += '<div class="seg ' + (ph === 'em-uso' ? '' : ph) + '" style="left:' + left.toFixed(2) + '%;width:' + w.toFixed(2) + '%" title="' + esc(a.om + ' · ' + a.mission + ' · ' + a.driver + ' · ' + period(a)) + '"><span>' + esc(a.om) + '</span></div>';
+    });
+    return '<div class="arow"><div class="alabel"><span class="plate">' + esc(v.plate) + '</span><span class="sub">' + esc(v.model) + '</span></div><div class="track">' + segs + nowLine + '</div></div>';
+  }).join('');
+  html += '</div></div><div class="legend">' +
+    '<span class="chip agendada">Agendada</span><span class="chip em-uso">Em uso</span><span class="chip atrasada">Devolução pendente</span><span class="chip concluida">Concluída</span><span class="chip manut">Manutenção</span></div>';
+  return html;
+}
+
+function renderView(){
+  var html = ui.view === 'frota' ? renderFrota() : ui.view === 'alocacoes' ? renderAlocacoes() : renderAgenda();
+  $('view').innerHTML = html;
+}
+
+function renderForm(){
+  var sel = $('f-veh'), keep = sel.value;
+  var ops = state.vehicles.filter(function(v){ return !v.maint; });
+  sel.innerHTML = '<option value="">Selecione a viatura</option>' + ops.map(function(v){
+    return '<option value="' + v.id + '">' + esc(v.plate + ' · ' + v.model + ' · lotação ' + v.seats) + '</option>';
+  }).join('');
+  if (keep && ops.some(function(v){ return v.id === keep; })) sel.value = keep;
+  var oms = {}, mots = {};
+  ['1º Batalhão de Infantaria','Cia de Comunicações','Companhia de Apoio','Pelotão de Saúde','Pelotão de Polícia do Exército'].forEach(function(o){ oms[o] = 1; });
+  state.allocs.forEach(function(a){ oms[a.om] = 1; mots[a.driver] = 1; });
+  $('dl-om').innerHTML = Object.keys(oms).map(function(o){ return '<option value="' + esc(o) + '">'; }).join('');
+  $('dl-mot').innerHTML = Object.keys(mots).map(function(o){ return '<option value="' + esc(o) + '">'; }).join('');
+}
+
+function renderClock(){
+  var d = new Date();
+  $('clock').textContent = d.toLocaleDateString('pt-BR', {weekday:'long', day:'2-digit', month:'long', year:'numeric'}) + ' · ' + hm(d.getTime());
+}
+
+function renderAll(){ renderClock(); renderSummary(); renderTabs(); renderView(); renderForm(); }
+
+
+function flash(msg, kind){ var f = $('flash'); f.textContent = msg || ''; f.className = 'flash' + (kind ? ' ' + kind : ''); }
+
+
+function setDefaults(){
+  var s = Math.ceil(Date.now() / (30 * MIN)) * 30 * MIN;
+  $('f-ini').value = toInput(s);
+  $('f-fim').value = toInput(s + 4 * H);
+}
+(function initForm(){
+  $('f-miss').innerHTML = MISSOES.map(function(m){ return '<option>' + esc(m) + '</option>'; }).join('');
+  setDefaults();
+})();
+
+function submitForm(e){
+  e.preventDefault();
+  var errs = [];
+  var vid = $('f-veh').value, v = vehicle(vid);
+  var om = $('f-om').value.trim(), dest = $('f-dest').value.trim(), mot = $('f-mot').value.trim();
+  var pax = parseInt($('f-pax').value, 10);
+  var s = new Date($('f-ini').value).getTime(), en = new Date($('f-fim').value).getTime();
+  if (!v) errs.push('Escolha a viatura.');
+  if (!om) errs.push('Informe a Organização Militar solicitante.');
+  if (!dest) errs.push('Informe o destino.');
+  if (!mot) errs.push('Informe o motorista.');
+  if (!(pax >= 1)) errs.push('O efetivo precisa ser de pelo menos 1 militar.');
+  if (isNaN(s) || isNaN(en)) errs.push('Preencha saída e retorno previstos.');
+  else if (en <= s) errs.push('O retorno previsto precisa ser depois da saída.');
+  else if (en <= Date.now()) errs.push('Esse período já terminou.');
+  if (v && pax > v.seats) errs.push(v.plate + ' leva no máximo ' + v.seats + ' militares e foram pedidos ' + pax + '.');
+  if (v && v.maint) errs.push(v.plate + ' está em manutenção.');
+  if (!errs.length) {
+    var cand = {start:s, end:en, vehicleId:vid};
+    var c1 = clash(cand, 'vehicle', vid);
+    if (c1) errs.push(v.plate + ' já está alocada de ' + fmt(c1.start) + ' a ' + fmt(c1.end) + ' (' + c1.om + ').');
+    var c2 = clash(cand, 'driver', mot);
+    if (c2) errs.push(mot + ' já está escalado de ' + fmt(c2.start) + ' a ' + fmt(c2.end) + ' (' + c2.om + ').');
+  }
+  $('formerr').innerHTML = errs.map(function(x){ return '<span>' + esc(x) + '</span>'; }).join('');
+  if (errs.length) return;
+  state.allocs.push({id:uid(), vehicleId:vid, om:om, mission:$('f-miss').value, dest:dest, driver:mot, pax:pax, start:s, end:en, status:'aberta'});
+  save();
+  $('f-dest').value = ''; $('f-veh').value = ''; $('f-pax').value = 1;
+  setDefaults();
+  flash(v.plate + ' alocada para ' + om + ', saída ' + fmt(s) + '.', 'ok');
+  ui.day = startOfDay(s);
+  renderAll();
+}
+
+function onViewClick(e){
+  var el = e.target.closest('[data-act]');
+  if (!el) return;
+  var act = el.getAttribute('data-act'), id = el.getAttribute('data-id'), val = el.getAttribute('data-v');
+  if (act === 'filter') { ui.filter = val; renderAll(); }
+  else if (act === 'aloFilter') { ui.aloFilter = val; ui.returning = null; renderAll(); }
+  else if (act === 'pick') {
+    $('f-veh').value = id; flash('');
+    var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    $('panel').scrollIntoView({behavior: reduce ? 'auto' : 'smooth', block:'nearest'});
+    $('f-om').focus({preventScroll:true});
+  }
+  else if (act === 'maint') {
+    var v = vehicle(id);
+    if (!v.maint) {
+      var open = openAllocs().filter(function(a){ return a.vehicleId === id; });
+      if (open.length) { flash(v.plate + ' tem ' + open.length + ' alocação(ões) em aberto. Devolva ou cancele antes de enviar à manutenção.', 'err'); return; }
+    }
+    v.maint = !v.maint; save();
+    flash(v.plate + (v.maint ? ' enviada à manutenção.' : ' liberada para uso.'), 'ok');
+    renderAll();
+  }
+  else if (act === 'return') { ui.returning = id; renderAll(); var k = $('km-' + id); if (k) k.focus(); }
+  else if (act === 'returnNo') { ui.returning = null; renderAll(); }
+  else if (act === 'returnOk') {
+    var al = state.allocs.filter(function(a){ return a.id === id; })[0], vv = vehicle(al.vehicleId);
+    var km = parseInt($('km-' + id).value, 10);
+    if (isNaN(km) || (vv && km < vv.km)) { flash('O hodômetro não pode ser menor que ' + (vv ? vv.km.toLocaleString('pt-BR') : 0) + ' km.', 'err'); return; }
+    al.status = 'concluida'; al.kmFinal = km; if (vv) vv.km = km;
+    ui.returning = null; save();
+    flash((vv ? vv.plate : 'Viatura') + ' devolvida com ' + km.toLocaleString('pt-BR') + ' km.', 'ok');
+    renderAll();
+  }
+  else if (act === 'cancel') {
+    var c = state.allocs.filter(function(a){ return a.id === id; })[0];
+    c.status = 'cancelada'; save(); flash('Alocação cancelada.', 'ok'); renderAll();
+  }
+  else if (act === 'day') {
+    ui.day = val === '0' ? startOfDay(Date.now()) : ui.day + Number(val) * 24 * H;
+    ui.day = startOfDay(ui.day + 12 * H);
+    renderAll();
+  }
+}
+
+function onViewInput(e){
+  if (e.target.id === 'q') {
+    ui.q = e.target.value;
+    var pos = e.target.selectionStart;
+    renderView();
+    var q = $('q'); if (q) { q.focus(); try { q.setSelectionRange(pos, pos); } catch(x){} }
+  } else if (e.target.id === 'daypick' && e.target.value) {
+    var p = e.target.value.split('-');
+    ui.day = new Date(+p[0], +p[1] - 1, +p[2]).getTime();
+    renderAll();
+  }
+}
+
+function goto(view){
+  if (VIEWS.indexOf(view) < 0) return;
+  ui.view = view; ui.returning = null; flash('');
+  renderAll();
+}
+
+document.querySelector('.tabs').addEventListener('click', function(e){
+  var b = e.target.closest('[data-view]'); if (!b) return;
+  var v = b.getAttribute('data-view');
+  try { if (location.hash !== '#' + v) { location.hash = v; return; } } catch(x){}
+  goto(v);
+});
+window.addEventListener('hashchange', function(){ goto(location.hash.replace('#','')); });
+$('view').addEventListener('click', onViewClick);
+$('view').addEventListener('input', onViewInput);
+$('form').addEventListener('submit', submitForm);
+$('reset').addEventListener('click', function(){
+  var b = $('reset');
+  if (!ui.resetArmed) { ui.resetArmed = true; b.textContent = 'Clique de novo para apagar tudo e restaurar'; setTimeout(function(){ ui.resetArmed = false; b.textContent = 'Restaurar dados de exemplo'; }, 4000); return; }
+  ui.resetArmed = false; b.textContent = 'Restaurar dados de exemplo';
+  state = seed(); save(); ui.returning = null; flash('Dados de exemplo restaurados.', 'ok'); renderAll();
+});
+
+setInterval(function(){
+  var a = document.activeElement;
+  if (a && $('view').contains(a) && a.tagName === 'INPUT') { renderClock(); renderSummary(); return; }
+  renderClock(); renderSummary(); renderView();
+}, 60000);
+
+var first = (location.hash || '').replace('#','');
+if (VIEWS.indexOf(first) >= 0) ui.view = first;
+renderAll();
+})();
+</script>
+
+</body></html>
